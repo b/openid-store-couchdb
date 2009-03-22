@@ -1,0 +1,7 @@
+== openid-store-couchdb
+
+A CouchDB association/nonce store for OpenID
+
+== CouchDB setup
+
+The CouchDB store requires 2 databases to function: associations and nonces.  Both must be available at the same base URI, generally meaning on the same server, and must have the same credentials for the username/password of the OpenID consumer client.
