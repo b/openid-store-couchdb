@@ -54,7 +54,13 @@ module OpenID
           else
             a = associations.values.sort{ |a, b| a.issued <=> b.issued }[-1]
           end
-          association = Association.new a
+          association = Association.new( :handle => a.handle,
+                                         :secret => Base64.decode64(a.secret),
+                                         :issued => a.issued.to_i,
+                                         :lifetime => a.lifetime.to_i,
+                                         :assoc_type => a.assoc_type
+                                       )
+          
           return association unless association.expires_in == 0
         end
         nil
@@ -76,7 +82,15 @@ module OpenID
         if associations.nil?
           associations = { 'new' => true }
         end
-        associations.merge!({association.handle => deepcopy(association)})
+        associations.merge!({ association.handle => {
+              :handle => association.handle,
+              :secret => Base64.encode64(association.secret),
+              :issued => association.issued.to_i,
+              :lifetime => association.lifetime.to_i,
+              :assoc_type => association.assoc_type
+            }
+          }
+        )
         store_associations(server_url, associations)
       end
       
