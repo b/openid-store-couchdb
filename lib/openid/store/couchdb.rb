@@ -52,7 +52,7 @@ module OpenID
           if handle
             a = associations[handle]
           else
-            a = associations.values.sort{ |a, b| a.issued <=> b.issued }[-1]
+            a = associations.values.sort{ |a, b| a['issued'].to_i <=> b['issued'].to_i }[-1]
           end
           association = Association.new( :handle => a['handle'],
                                          :secret => Base64.decode64(a['secret']),
