@@ -49,9 +49,10 @@ module OpenID
           rows.each do |row|
             doc = astore[row['id']].get(:content_type => 'application/json')
             associations = JSON.parse(doc) ; modified = false
-            associations.values.each do |association|
+            associations.delete('_id') ; associations.delete('_rev')
+            associations.each_pair do |handle, association|
             unless association['issued'].to_i + association['lifetime'].to_i > Time.now.to_i
-              associations.delete(association['handle']) ; modified = true
+              associations.delete(handle) ; modified = true
             end
             store_associations(Base64.decode64(row['id']), associations) if modified
           end
@@ -60,9 +61,10 @@ module OpenID
           rows = JSON.parse(doc)['rows']
           rows.each do |associations|
             associations = associations['doc'] ; modified = false
-            associations.keys.each do |association|
+            associations.delete('_id') ; associations.delete('_rev')
+            associations.each_pair do |handle, association|
             unless association['issued'].to_i + association['lifetime'].to_i > Time.now.to_i
-              associations.delete(association['handle']) ; modified = true
+              associations.delete(handle) ; modified = true
             end
             store_associations(Base64.decode64(row['id']), associations) if modified
           end
