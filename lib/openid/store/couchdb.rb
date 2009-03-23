@@ -74,7 +74,7 @@ module OpenID
       def store_association(server_url, association)
         res = get_associations(server_url)
         if res.nil?
-          res = { :associations => {} }
+          res = { '_ver' => gen_document_version, 'associations' => {} }
         end
         res['associations'][association.handle] = association.serialize
         store_associations(server_url, res)
@@ -94,7 +94,7 @@ module OpenID
         nonce = '%08x-%s-%s'%[timestamp, Base64.encode64(server_url).chomp, Base64.encode64(salt.to_s).chomp]
         
         begin
-          res = nstore[nonce].get :content_type => 'application/json'
+          res = nstore[nonce].get(:content_type => 'application/json')
           return false
         rescue RestClient::ResourceNotFound => e
           res = nstore[nonce].put({ :server_url => server_url,
@@ -117,10 +117,10 @@ module OpenID
       end
       
       def store_associations(server_url, associations)
-        res = { :_ver => generate_doc_version, :associations => associations }
+        res = { '_ver' => generate_doc_version, 'associations' => associations }
         begin
-          astore[Base64.encode64(server_url)].put res.to_json,
-                                                  :content_type => 'application/json'
+          astore[Base64.encode64(server_url)].put(res.to_json,
+                                                  :content_type => 'application/json')
         rescue
           # BUGBUG - figure out what a version conflict looks like and recover from it
           nil
