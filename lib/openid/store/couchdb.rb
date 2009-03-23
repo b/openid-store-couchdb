@@ -74,7 +74,7 @@ module OpenID
       def store_association(server_url, association)
         associations = get_associations(server_url)
         if associations.nil?
-          associations = {}
+          associations = { 'new' => true }
         end
         associations.merge!({association.handle => deepcopy(association)})
         store_associations(server_url, associations)
@@ -118,7 +118,12 @@ module OpenID
       end
 
       def store_associations(server_url, associations)
-        associations['_rev'] = generate_doc_version
+        if associations.has_key?('new')
+          associations.delete('new')
+        else
+          associations['_rev'] = generate_doc_version
+        end
+        
         begin
           astore[Base64.encode64(server_url)].put(associations.to_json,
                                                   :content_type => 'application/json')
