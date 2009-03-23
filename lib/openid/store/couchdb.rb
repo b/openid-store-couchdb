@@ -47,12 +47,12 @@ module OpenID
       end
       
       def get_association(server_url, handle = nil)
-        res = get_associations(server_url)
-        unless res.nil?
+        associations = get_associations(server_url)
+        unless associations.nil?
           if handle
-            a = res['associations'][handle]
+            a = associations[handle]
           else
-            a = res['associations'].first
+            a = associations.values.first
           end
           association = Association.new a
           return association unless association.expires_in == 0
@@ -61,10 +61,10 @@ module OpenID
       end
       
       def remove_association(server_url, handle)
-        res = get_associations(server_url)
-        unless res.nil?
-          if res['associations'].has_key?(handle) && res['associations'].delete(handle)
-            store_associations(server_url, res)
+        associations = get_associations(server_url)
+        unless associations.nil?
+          if associations.has_key?(handle) && associations.delete(handle)
+            store_associations(server_url, associations)
             return true
           end
         end
@@ -72,12 +72,12 @@ module OpenID
       end
       
       def store_association(server_url, association)
-        res = get_associations(server_url)
-        if res.nil?
-          res = { '_ver' => generate_doc_version, 'associations' => {} }
+        associations = get_associations(server_url)
+        if associations.nil?
+          associations = {}
         end
-        res['associations'][association.handle] = association.serialize
-        store_associations(server_url, res)
+        associations[association.handle] = association.serialize
+        store_associations(server_url, associations)
       end
       
       def use_nonce(server_url, timestamp, salt)
@@ -85,7 +85,7 @@ module OpenID
 
         # this little block is from OpenID::Store::Filesystem.  i don't like it.
         if server_url and !server_url.empty?
-          proto, rest = server_url.split('://',2)
+          proto, rest = server_url.split('://', 2)
         else
           proto, rest = '',''
         end
@@ -110,7 +110,7 @@ module OpenID
       def get_associations(server_url)
         begin
           res = astore[Base64.encode64(server_url)].get(:content_type => 'application/json')
-          return JSON.parse(res)
+          return JSON.parse(res['associations'])
         rescue
           nil
         end
