@@ -17,6 +17,9 @@
 #
 
 require 'openid'
+require 'openid/util'
+require 'openid/store/interface'
+require 'openid/association'
 require 'restclient'
 require 'json'
 require 'base64'
