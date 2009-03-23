@@ -76,7 +76,7 @@ module OpenID
         if associations.nil?
           associations = {}
         end
-        associations[association.handle] = association.serialize
+        associations.merge!({association.handle => deepcopy(association)})
         store_associations(server_url, associations)
       end
       
@@ -104,34 +104,39 @@ module OpenID
           return true
         end
       end
-      
-      private
-      
+
+      protected
+
       def get_associations(server_url)
         begin
           doc = astore[Base64.encode64(server_url)].get(:content_type => 'application/json')
-          return JSON.parse(doc)['associations']
+          doc.delete('_id') ; doc.delete('_rev')
+          return JSON.parse(doc)
         rescue
           nil
         end
       end
-      
+
       def store_associations(server_url, associations)
-        doc = { '_ver' => generate_doc_version, 'associations' => associations }
+        associations['_ver'] = generate_doc_version
         begin
-          astore[Base64.encode64(server_url)].put(doc.to_json,
+          astore[Base64.encode64(server_url)].put(associations.to_json,
                                                   :content_type => 'application/json')
         rescue
           # BUGBUG - figure out what a version conflict looks like and recover from it
           nil
         end
       end
-      
+
       def generate_doc_version
         t = Time.now
         (t.tv_sec * 1000000 + t.tv_usec).to_s(16)
       end
-         
+
+      def deepcopy(o)
+        Marshal.load(Marshal.dump(o))
+      end
+
     end
   end
 end
