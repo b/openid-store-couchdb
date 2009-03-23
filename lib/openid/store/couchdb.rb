@@ -110,17 +110,17 @@ module OpenID
       def get_associations(server_url)
         begin
           res = astore[Base64.encode64(server_url)].get(:content_type => 'application/json')
-          JSON.parse(res)
+          return JSON.parse(res)
         rescue
           nil
         end
       end
       
       def store_associations(server_url, associations)
-        res['_ver'] = generate_doc_version
+        res = { :_ver => generate_doc_version, :associations => associations }
         begin
-          res = astore[Base64.encode64(server_url)].put associations.to_json,
-                                                        :content_type => 'application/json'
+          astore[Base64.encode64(server_url)].put res.to_json,
+                                                  :content_type => 'application/json'
         rescue
           # BUGBUG - figure out what a version conflict looks like and recover from it
           nil
