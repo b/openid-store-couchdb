@@ -54,13 +54,11 @@ module OpenID
           else
             a = associations.values.sort{ |a, b| a['issued'].to_i <=> b['issued'].to_i }[-1]
           end
-          association = Association.new( :handle => a['handle'],
-                                         :secret => Base64.decode64(a['secret']),
-                                         :issued => a['issued'].to_i,
-                                         :lifetime => a['lifetime'].to_i,
-                                         :assoc_type => a['assoc_type']
-                                       )
-          
+          association = Association.new( a['handle'],
+                                         Base64.decode64(a['secret']),
+                                         a['issued'].to_i,
+                                         a['lifetime'].to_i,
+                                         a['assoc_type'])
           return association unless association.expires_in == 0
         end
         nil
@@ -150,10 +148,6 @@ module OpenID
       def generate_doc_version
         t = Time.now
         (t.tv_sec * 1000000 + t.tv_usec).to_s(16)
-      end
-
-      def deepcopy(o)
-        Marshal.load(Marshal.dump(o))
       end
 
     end
