@@ -74,7 +74,7 @@ module OpenID
       def store_association(server_url, association)
         res = get_associations(server_url)
         if res.nil?
-          res = { '_ver' => gen_document_version, 'associations' => {} }
+          res = { '_ver' => generate_doc_version, 'associations' => {} }
         end
         res['associations'][association.handle] = association.serialize
         store_associations(server_url, res)
