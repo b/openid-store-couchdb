@@ -118,7 +118,7 @@ module OpenID
       end
 
       def store_associations(server_url, associations)
-        associations['_ver'] = generate_doc_version
+        associations['_rev'] = generate_doc_version
         begin
           astore[Base64.encode64(server_url)].put(associations.to_json,
                                                   :content_type => 'application/json')
