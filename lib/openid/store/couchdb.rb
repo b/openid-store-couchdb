@@ -27,15 +27,18 @@ require 'base64'
 module OpenID
   module Store
     class CouchDB < Interface
-      attr_reader :astore, :nstore
+      attr_reader :astore, :nstore, :version
       
       def initialize(base_uri, username = "", password = "")
+        store = RestClient::Resource.new("#{base_uri}", :user => username, :password => password)
+        @version = JSON.parse(store.get(:content_type => 'application/json'))['version'].split('-').first
         @astore = RestClient::Resource.new("#{base_uri}/associations", :user => username, :password => password)
         @nstore = RestClient::Resource.new("#{base_uri}/nonces", :user => username, :password => password)
       end
       
       def cleanup
-        true
+        cleanup_associations
+        cleanup_nonces
       end
       
       def cleanup_associations
@@ -43,7 +46,25 @@ module OpenID
       end
       
       def cleanup_nonces
-        true
+        if version.match(/^0\.8\./)
+          doc = nstore["_all_docs"].get(:content_type => 'application/json')
+          rows = JSON.parse(doc)['rows']
+          rows.each do |row|
+            doc = nstore[row['id']].get(:content_type => 'application/json')
+            nonce = JSON.parse(doc)
+            if (nonce['timestamp'].to_i - Time.now.to_i).abs > Nonce.skew
+              res = nstore[row['id']].delete(:content_type => 'application/json')
+            end
+          end
+        else
+          doc = nstore["_all_docs?include_docs=true"].get(:content_type => 'application/json')
+          rows = JSON.parse(doc)['rows']
+          rows.each do |row|
+            if (row['doc']['timestamp'].to_i - Time.now.to_i).abs > Nonce.skew
+              res = nstore[row['id']].delete(:content_type => 'application/json')
+            end
+          end
+        end
       end
       
       def get_association(server_url, handle = nil)

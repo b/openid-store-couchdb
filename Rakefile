@@ -23,8 +23,9 @@ spec = Gem::Specification.new do |s|
   s.email = EMAIL
   s.homepage = HOMEPAGE
   
-  # Uncomment this to add a dependency
-  # s.add_dependency "foo"
+  ["json",
+   "rest-client",
+   "ruby-openid"].each { |g| s.add_dependency g}
   
   s.require_path = 'lib'
   s.autorequire = GEM
