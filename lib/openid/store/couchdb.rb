@@ -42,14 +42,14 @@ module OpenID
       end
       
       def cleanup_associations
-        # delete unless issued + lifetime > Time.now.to_i
+        # BUGBUG - this doesn't work yet.
         if version.match(/^0\.8\./)
           doc = astore["_all_docs"].get(:content_type => 'application/json')
           rows = JSON.parse(doc)['rows']
           rows.each do |row|
             doc = astore[row['id']].get(:content_type => 'application/json')
             associations = JSON.parse(doc) ; modified = false
-            associations.each do |association|
+            associations.values.each do |association|
             unless association['issued'].to_i + association['lifetime'].to_i > Time.now.to_i
               associations.delete(association['handle']) ; modified = true
             end
@@ -60,7 +60,7 @@ module OpenID
           rows = JSON.parse(doc)['rows']
           rows.each do |associations|
             associations = associations['doc'] ; modified = false
-            associations.each do |association|
+            associations.keys.each do |association|
             unless association['issued'].to_i + association['lifetime'].to_i > Time.now.to_i
               associations.delete(association['handle']) ; modified = true
             end
@@ -103,7 +103,7 @@ module OpenID
                                          Base64.decode64(a['secret']),
                                          a['issued'].to_i,
                                          a['lifetime'].to_i,
-                                         a['assoc_type'])
+                                         a['assoc_type'] )
           return association unless association.expires_in == 0
         end
         nil
