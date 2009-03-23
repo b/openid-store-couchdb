@@ -42,7 +42,31 @@ module OpenID
       end
       
       def cleanup_associations
-        true
+        # delete unless issued + lifetime > Time.now.to_i
+        if version.match(/^0\.8\./)
+          doc = astore["_all_docs"].get(:content_type => 'application/json')
+          rows = JSON.parse(doc)['rows']
+          rows.each do |row|
+            doc = astore[row['id']].get(:content_type => 'application/json')
+            associations = JSON.parse(doc) ; modified = false
+            associations.each do |association|
+            unless association['issued'].to_i + association['lifetime'].to_i > Time.now.to_i
+              associations.delete(association['handle']) ; modified = true
+            end
+            store_associations(Base64.decode64(row['id']), associations) if modified
+          end
+        else
+          doc = astore["_all_docs?include_docs=true"].get(:content_type => 'application/json')
+          rows = JSON.parse(doc)['rows']
+          rows.each do |associations|
+            associations = associations['doc'] ; modified = false
+            associations.each do |association|
+            unless association['issued'].to_i + association['lifetime'].to_i > Time.now.to_i
+              associations.delete(association['handle']) ; modified = true
+            end
+            store_associations(Base64.decode64(row['id']), associations) if modified
+          end
+        end
       end
       
       def cleanup_nonces
@@ -98,9 +122,7 @@ module OpenID
       
       def store_association(server_url, association)
         associations = get_associations(server_url)
-        if associations.nil?
-          associations = { 'new' => true }
-        end
+        associations ||= {}
         associations.merge!({ association.handle => {
               :handle => association.handle,
               :secret => Base64.encode64(association.secret),
@@ -143,7 +165,6 @@ module OpenID
       def get_associations(server_url)
         begin
           doc = astore[Base64.encode64(server_url)].get(:content_type => 'application/json')
-          doc.delete('_id') ; doc.delete('_rev')
           return JSON.parse(doc)
         rescue
           nil
@@ -151,11 +172,7 @@ module OpenID
       end
 
       def store_associations(server_url, associations)
-        if associations.has_key?('new')
-          associations.delete('new')
-        else
-          associations['_rev'] = generate_doc_version
-        end
+        associations['_rev'] = generate_doc_version if associations['_rev']
         
         begin
           astore[Base64.encode64(server_url)].put(associations.to_json,
