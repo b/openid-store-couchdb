@@ -26,7 +26,7 @@ require 'base64'
 
 module OpenID
   module Store
-    class CouchDB
+    class CouchDB < Interface
       attr_reader :astore, :nstore
       
       def initialize(base_uri, username = "", password = "")
@@ -52,7 +52,7 @@ module OpenID
           if handle
             a = associations[handle]
           else
-            a = associations.values.first
+            a = associations.values.sort{ |a, b| a.issued <=> b.issued }[-1]
           end
           association = Association.new a
           return association unless association.expires_in == 0
