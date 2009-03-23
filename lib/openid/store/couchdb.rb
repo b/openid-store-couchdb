@@ -51,7 +51,7 @@ module OpenID
             a = res['associations'].first
           end
           association = Association.new a
-          return association unless association.expired?
+          return association unless association.expires_in == 0
         end
         nil
       end
