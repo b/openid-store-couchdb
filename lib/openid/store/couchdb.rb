@@ -54,11 +54,11 @@ module OpenID
           else
             a = associations.values.sort{ |a, b| a.issued <=> b.issued }[-1]
           end
-          association = Association.new( :handle => a.handle,
-                                         :secret => Base64.decode64(a.secret),
-                                         :issued => a.issued.to_i,
-                                         :lifetime => a.lifetime.to_i,
-                                         :assoc_type => a.assoc_type
+          association = Association.new( :handle => a['handle'],
+                                         :secret => Base64.decode64(a['secret']),
+                                         :issued => a['issued'].to_i,
+                                         :lifetime => a['lifetime'].to_i,
+                                         :assoc_type => a['assoc_type']
                                        )
           
           return association unless association.expires_in == 0
