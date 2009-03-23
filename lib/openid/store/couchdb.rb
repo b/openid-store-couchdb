@@ -47,7 +47,8 @@ module OpenID
       end
       
       def get_association(server_url, handle = nil)
-        if res = get_associations(server_url)
+        res = get_associations(server_url)
+        unless res.nil?
           if handle
             a = res['associations'][handle]
           else
@@ -60,18 +61,19 @@ module OpenID
       end
       
       def remove_association(server_url, handle)
-        if res = get_associations(server_url)
+        res = get_associations(server_url)
+        unless res.nil?
           if res['associations'].has_key?(handle) && res['associations'].delete(handle)
             store_associations(server_url, res)
-            true
-          else
-            false
+            return true
           end
         end
+        false
       end
       
       def store_association(server_url, association)
-        unless res = get_associations(server_url)
+        res = get_associations(server_url)
+        if res.nil?
           res = { :associations => {} }
         end
         res['associations'][association.handle] = association.serialize
@@ -107,9 +109,9 @@ module OpenID
       
       def get_associations(server_url)
         begin
-          res = astore[Base64.encode64(server_url)].get :content_type => 'application/json'
+          res = astore[Base64.encode64(server_url)].get(:content_type => 'application/json')
           JSON.parse(res)
-        rescue RestClient::ResourceNotFound => e
+        rescue
           nil
         end
       end
